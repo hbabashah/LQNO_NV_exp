@@ -65,7 +65,6 @@ class ConfocalComplexGUI(GUIBase):
         """
 
         self._confocallogic = self.confocallogic()
-        self._pulselogic = self.pulselogic()
 
 
         # Use the inherited class 'Ui_ODMRGuiUI' to create now the GUI element:
@@ -161,20 +160,20 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.movetoxy_btn.clicked.connect(self._confocallogic.move_to_position)
         self.SigStartAcquisition.connect(self._confocallogic.start_data_acquisition)
         self.SigStopAcquisition.connect(self._confocallogic.stop_data_acquisition)
-        self.SigNavgChanged.connect(self._pulselogic.set_navg, QtCore.Qt.QueuedConnection)
+        self.SigNavgChanged.connect(self._confocallogic.set_navg, QtCore.Qt.QueuedConnection)
 
-        self._mw.time_start_doubleSpinBox.setValue(self._pulselogic.time_start) # Status var
-        self._mw.rabi_period_doubleSpinBox.setValue(self._pulselogic.rabi_period) # Status var
-        self._mw.navg_doubleSpinBox.setValue(self._pulselogic.navg) # Status var
-        self._mw.npts_doubleSpinBox.setValue(self._pulselogic.npts) # Status var
-        self.SigSetPulseChanged.connect(self._pulselogic.set_pulse, QtCore.Qt.QueuedConnection)
-        self._mw.time_stop_doubleSpinBox.setValue(self._pulselogic.time_stop) # Status var
-        self.SigPulseAnalysisChanged.connect(self._pulselogic.set_pulse_analysi_param, QtCore.Qt.QueuedConnection)
-        self._mw.threshold_doubleSpinBox.setValue(self._pulselogic.threshold) # Status var
-        self._mw.time_reference_doubleSpinBox.setValue(self._pulselogic.time_reference) # Status var
-        self._mw.time_signal_doubleSpinBox.setValue(self._pulselogic.time_signal) # Status var
-        self._mw.time_reference_start_doubleSpinBox.setValue(self._pulselogic.time_reference_start) # Status var
-        self._mw.time_signal_start_doubleSpinBox.setValue(self._pulselogic.time_signal_start) # Status var
+        self._mw.time_start_doubleSpinBox.setValue(self._confocallogic.time_start) # Status var
+        self._mw.rabi_period_doubleSpinBox.setValue(self._confocallogic.rabi_period) # Status var
+        self._mw.navg_doubleSpinBox.setValue(self._confocallogic.navg) # Status var
+        self._mw.npts_doubleSpinBox.setValue(self._confocallogic.npts) # Status var
+        self.SigSetPulseChanged.connect(self._confocallogic.set_pulse, QtCore.Qt.QueuedConnection)
+        self._mw.time_stop_doubleSpinBox.setValue(self._confocallogic.time_stop) # Status var
+        self.SigPulseAnalysisChanged.connect(self._confocallogic.set_pulse_analysi_param, QtCore.Qt.QueuedConnection)
+        self._mw.threshold_doubleSpinBox.setValue(self._confocallogic.threshold) # Status var
+        self._mw.time_reference_doubleSpinBox.setValue(self._confocallogic.time_reference) # Status var
+        self._mw.time_signal_doubleSpinBox.setValue(self._confocallogic.time_signal) # Status var
+        self._mw.time_reference_start_doubleSpinBox.setValue(self._confocallogic.time_reference_start) # Status var
+        self._mw.time_signal_start_doubleSpinBox.setValue(self._confocallogic.time_signal_start) # Status var
 
 
         self.SigFcwChanged.connect(self._confocallogic.set_fcw, QtCore.Qt.QueuedConnection)
@@ -182,7 +181,7 @@ class ConfocalComplexGUI(GUIBase):
         self.SigPcwChanged.connect(self._confocallogic.set_pcw, QtCore.Qt.QueuedConnection)
 
         self._mw.pcw_doubleSpinBox.setValue(self._confocallogic.pcw) # Status var
-        self._mw.npts_doubleSpinBox.setValue(self._confocallogic.npts) # Status var
+        self._mw.npts_ODMR_doubleSpinBox.setValue(self._confocallogic.npts) # Status var
         self.SigSetODMRChanged.connect(self._confocallogic.set_ODMR, QtCore.Qt.QueuedConnection)
         self._mw.stime_doubleSpinBox.setValue(self._confocallogic.stime) # Status var
         self.SigFsweepChanged.connect(self._confocallogic.set_sweep_param, QtCore.Qt.QueuedConnection)
@@ -275,8 +274,8 @@ class ConfocalComplexGUI(GUIBase):
 
 
         stime = self._mw.stime_doubleSpinBox.value()
-        npts = self._mw.npts_doubleSpinBox.value()
-        self.SigSetODMRChanged.emit(stime,npts)
+        nptsODMR = self._mw.npts_ODMR_doubleSpinBox.value()
+        self.SigSetODMRChanged.emit(stime,nptsODMR)
     def change_sweep_param(self):
 
 

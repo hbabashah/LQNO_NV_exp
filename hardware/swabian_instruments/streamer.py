@@ -23,6 +23,12 @@ class Streamer(Base, dummy_interface):
     H.Babashah - Hardware code for Swabian Pulse streamer.
     """
     _instrument_ip = ConfigOption(name='instrument_ip', default='192.168.2.153', missing='warn')
+    _Laser_channel = ConfigOption(name='laser_channel', default='6', missing='info')
+    _scope_channel = ConfigOption(name='scope_channel', default='0', missing='info')
+    _MW_trigger_channel = ConfigOption(name='MW_trigger_channel', default='2', missing='info')
+    _switch_channel = ConfigOption(name='switch_channel', default='1', missing='info')
+    _analogx_channel = ConfigOption(name='analogx_channel', default='0', missing='info')
+    _analogy_channel = ConfigOption(name='analogy_channel', default='1', missing='info')
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
@@ -52,10 +58,10 @@ class Streamer(Base, dummy_interface):
         return np.linspace(1,100,300), np.random.rand(300)
 
     def set_ODMR(self,SweepStep,Npts):
-        LaserCh = 6
-        OscopeCh = 0
-        MWChTrig = 2
-        SwitchCh = 1
+        LaserCh = self._LaserCh
+        OscopeCh = self._scope_channel
+        MWChTrig = self._MW_trigger_channel
+        SwitchCh = self._switch_channel
         # MW channel is one
         # define digital levels
         HIGH = 1
@@ -97,16 +103,15 @@ class Streamer(Base, dummy_interface):
 
     def set_confocal(self,Xvalue,Yvalue):
         V2C_coef = 0.1 * 1e6  # It should be calibrated based on the acquired image
-        LaserCh = 6
-        AnalogXCh = 0
-        AnalogYCh = 1
-        OscopeCh = 0
+        LaserCh = self._LaserCh
+        AnalogXCh = self.analogx_channel
+        AnalogYCh = self.analogy_channel
+        OscopeCh = self._scope_channel
 
         HIGH = 1
         LOW = 0
         NumberOfrepeats = 100
         dtime = 1e-3;
-        pulsetype = 'Confocal'
         Lowtime = 200e-6;  # Level sensitive
         LaserChseq = [(dtime * 1e9, HIGH)] * NumberOfrepeats  # 0
         AnalogXChseq = [(dtime * 1e9, Xvalue*V2C_coef)] * NumberOfrepeats
@@ -138,9 +143,9 @@ class Streamer(Base, dummy_interface):
     def set_pulse_measurement(self, Variable,pulsetype,rabi_period):
         wl = 100e-6  # LaserPulseWidth in second
 
-        LaserCh = 6
-        OscopeCh = 0
-        MWCh = 1 # switch channel for MW
+        LaserCh = self._LaserCh
+        OscopeCh = self._scope_channel
+        MWCh = self.switch_channel # switch channel for MW
         # define digital levels
         HIGH = 1
         LOW = 0

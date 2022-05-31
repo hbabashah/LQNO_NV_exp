@@ -143,6 +143,9 @@ class Confocallogiccomplex(GenericLogic):
                     self._piezo.goz(V_Yvalue)
                     if self.mes_type=='Contrast':
                         self._mw_device.set_status('OFF')
+                    if self.mes_type == 'Contrast_fmax':
+                        self._mw_device.set_fcw(self.fmax)
+                        self._mw_device.set_status('ON')
                     posread =self._piezo.get_position()
                     print(V_Yvalue, posread[2])
                     t1 = time.time()
@@ -157,7 +160,8 @@ class Confocallogiccomplex(GenericLogic):
                     Image_xy[i, j] = np.mean(DATA[self.ChannelNumber])
                     self.SigConfocalDataUpdated.emit(Image_xy)  # np.random.rand(5, 5)
                     Image_xy_arb[i, j] = np.mean(DATA[self.ChannelNumber])
-                    if self.mes_type=='Contrast':
+                    if self.mes_type=='Contrast' or 'Contrast_fmax':
+                        self._mw_device.set_fcw(self.fcw)
                         self._mw_device.set_status('ON')
                         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
                         time.sleep(1e-3)  # make sure sgn is on
@@ -271,8 +275,9 @@ class Confocallogiccomplex(GenericLogic):
         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
 
     def set_fcw(self, fcw):
-        self._mw_device.set_fcw(fcw)
         self.fcw = fcw
+        self._mw_device.set_fcw(self.fcw)
+
 
 
     def stop_data_acquisition(self,state):

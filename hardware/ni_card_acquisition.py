@@ -20,8 +20,8 @@ class NICard_Acquisition(Base, dummy_interface):
     """
 
     # config options
-    _device_name = ConfigOption(name='device_name', default='Dev1', missing='warn')
-    _device_name_ao = ConfigOption(name='device_name_ao', default='Dev3', missing='warn')
+    _device_name_slow = ConfigOption(name='device_name_slow', default='Dev1', missing='warn')
+    _device_name_fast = ConfigOption(name='device_name_fast', default='Dev3', missing='warn')
     _analog_inputs = ConfigOption(name='analog_inputs', default=list(), missing='warn')
     _analog_outputs = ConfigOption(name='analog_outputs', default=list(), missing='warn')
     _trigger_terminal = ConfigOption(name='trigger_terminal', default='PFI0', missing='info')
@@ -44,12 +44,12 @@ class NICard_Acquisition(Base, dummy_interface):
         # Create the list of channels to acquire
         self.nb_chan = 0
         for channel in self._analog_inputs:
-            daq.CreateAIVoltageChan(self._ai_task, self._device_name+'/'+channel, None, daq.DAQmx_Val_RSE, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
+            daq.CreateAIVoltageChan(self._ai_task, self._device_name_fast+'/'+channel, None, daq.DAQmx_Val_RSE, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
             self.nb_chan += 1
 
         # self.nb_chan = 0
         # for channel in self._analog_outputs:
-        #     daq.CreateAOVoltageChan(self._ao_task, self._device_name_ao+'/'+channel, None, daq.DAQmx_Val_Diff, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
+        #     daq.CreateAOVoltageChan(self._ao_task, self._device_name_slow+'/'+channel, None, daq.DAQmx_Val_Diff, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
         #     self.nb_chan += 1
 
 

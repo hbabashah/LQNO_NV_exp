@@ -37,6 +37,7 @@ class Confocallogiccomplex(GenericLogic):
     ypos = StatusVar('ypos', 0)# y position
     zpos = StatusVar('zpos', 0)# z position
     mes_type = StatusVar('mes_type', 'PL')# stop time
+    int_time = StatusVar('int_time', 20e-9)# integration time
 
 
 
@@ -168,6 +169,10 @@ class Confocallogiccomplex(GenericLogic):
                         DATA = self._nicard.read_data()
                         Image_xy_arb[i, j] = 1- np.mean(DATA[self.ChannelNumber])/Image_xy[i, j]
                     if self.mes_type == 'T1' or 'Rabi' or 'Ramsey' or 'Hahn_echo':
+                        if self.mes_type == 'Rabi' or 'Ramsey' or 'Hahn_echo':
+                            self._mw_device.set_fcw(self.fcw)
+                            self._mw_device.set_status('ON')
+                            time.sleep(1e-3)
                         self.Laser_length=100e-6
                         self.Laser_length_s=int(np.ceil(self.Laser_length*self._nicard.get_timing()))
                         var_sweep_type = 'linear'
@@ -183,7 +188,7 @@ class Confocallogiccomplex(GenericLogic):
                                 break
                             self._pulser.set_pulse_measurement(variable, self.mes_type, self.rabi_period)
                             self._pulser.start_stream()
-                            self._nicard.set_timing(self.int_time)
+
                             self._nicard.set_pause_trigger('Low')
                             self._nicard.set_refrence_trigger('Falling',self.Laser_length_s)
                             DATA = self._nicard.read_data()

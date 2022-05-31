@@ -71,7 +71,8 @@ class NICard_Acquisition(Base, dummy_interface):
         #                      daq.DAQmx_Val_FiniteSamps, self.numSamples)
 
         self.data = np.ndarray((self.nb_chan+1, self.nb_samps_per_chan))
-
+    def get_timing(self):
+        return self._sampling_frequency
     def set_trigger(self, edge):
         """ H.Babashah - Define the edge of the external trigger. """
 

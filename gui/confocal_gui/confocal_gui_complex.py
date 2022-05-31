@@ -48,6 +48,10 @@ class ConfocalComplexGUI(GUIBase):
     SigCordinateSparamChanged = QtCore.Signal(float, float, float,float,float,float)
     SigCordinateChanged  = QtCore.Signal(float, float,float)
     SigScopeParamChanged = QtCore.Signal(float,float)
+    SigSetPulseChanged = QtCore.Signal(float,float,float,float)
+    SigPulseAnalysisChanged = QtCore.Signal(float,float,float,float,float)
+    SigNavgChanged = QtCore.Signal(float)
+
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
 
@@ -61,6 +65,8 @@ class ConfocalComplexGUI(GUIBase):
         """
 
         self._confocallogic = self.confocallogic()
+        self._pulselogic = self.pulselogic()
+
 
         # Use the inherited class 'Ui_ODMRGuiUI' to create now the GUI element:
         self._mw = Confocal_MainWindow()
@@ -120,6 +126,19 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.int_time_doubleSpinBox.editingFinished.connect(self.change_scope_param)
         self._mw.navg_doubleSpinBox.editingFinished.connect(self.change_scope_param)
 
+        self._mw.time_stop_doubleSpinBox.editingFinished.connect(self.set_pulse)
+        self._mw.npts_doubleSpinBox.editingFinished.connect(self.set_pulse)
+        self._mw.time_start_doubleSpinBox.editingFinished.connect(self.set_pulse)
+        self._mw.rabi_period_doubleSpinBox.editingFinished.connect(self.set_pulse)
+
+
+        self._mw.threshold_doubleSpinBox.editingFinished.connect(self.change_pulse_analysis_param)
+        self._mw.time_reference_doubleSpinBox.editingFinished.connect(self.change_pulse_analysis_param)
+        self._mw.time_signal_doubleSpinBox.editingFinished.connect(self.change_pulse_analysis_param)
+        self._mw.time_reference_start_doubleSpinBox.editingFinished.connect(self.change_pulse_analysis_param)
+        self._mw.time_signal_start_doubleSpinBox.editingFinished.connect(self.change_pulse_analysis_param)
+
+
         self._mw.fmin_doubleSpinBox.editingFinished.connect(self.change_sweep_param)
         self._mw.fmax_doubleSpinBox.editingFinished.connect(self.change_sweep_param)
         self._mw.fstep_doubleSpinBox.editingFinished.connect(self.change_sweep_param)
@@ -142,6 +161,21 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.movetoxy_btn.clicked.connect(self._confocallogic.move_to_position)
         self.SigStartAcquisition.connect(self._confocallogic.start_data_acquisition)
         self.SigStopAcquisition.connect(self._confocallogic.stop_data_acquisition)
+        self.SigNavgChanged.connect(self._pulselogic.set_navg, QtCore.Qt.QueuedConnection)
+
+        self._mw.time_start_doubleSpinBox.setValue(self._pulselogic.time_start) # Status var
+        self._mw.rabi_period_doubleSpinBox.setValue(self._pulselogic.rabi_period) # Status var
+        self._mw.navg_doubleSpinBox.setValue(self._pulselogic.navg) # Status var
+        self._mw.npts_doubleSpinBox.setValue(self._pulselogic.npts) # Status var
+        self.SigSetPulseChanged.connect(self._pulselogic.set_pulse, QtCore.Qt.QueuedConnection)
+        self._mw.time_stop_doubleSpinBox.setValue(self._pulselogic.time_stop) # Status var
+        self.SigPulseAnalysisChanged.connect(self._pulselogic.set_pulse_analysi_param, QtCore.Qt.QueuedConnection)
+        self._mw.threshold_doubleSpinBox.setValue(self._pulselogic.threshold) # Status var
+        self._mw.time_reference_doubleSpinBox.setValue(self._pulselogic.time_reference) # Status var
+        self._mw.time_signal_doubleSpinBox.setValue(self._pulselogic.time_signal) # Status var
+        self._mw.time_reference_start_doubleSpinBox.setValue(self._pulselogic.time_reference_start) # Status var
+        self._mw.time_signal_start_doubleSpinBox.setValue(self._pulselogic.time_signal_start) # Status var
+
 
         self.SigFcwChanged.connect(self._confocallogic.set_fcw, QtCore.Qt.QueuedConnection)
         self._mw.fcw_doubleSpinBox.setValue(self._confocallogic.fcw) # Status var
@@ -198,10 +232,10 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.ynpts_doubleSpinBox.editingFinished.disconnect()
         self._mw.int_time_doubleSpinBox.editingFinished.disconnect()
         self.SigScopeParamChanged.disconnect()
+        self._mw.time_start_doubleSpinBox.editingFinished.disconnect()
+        self._mw.rabi_period_doubleSpinBox.editingFinished.disconnect()
         self._mw.navg_doubleSpinBox.editingFinished.disconnect()
-
-
-
+        self.SigNavgChanged.disconnect()
         self._mw.close()
         return 0
 
@@ -349,7 +383,12 @@ class ConfocalComplexGUI(GUIBase):
         navg = self._mw.navg_doubleSpinBox.value()
         self.SigScopeParamChanged.emit(int_time,navg)
 
-
+    def set_pulse(self):
+        time_start = self._mw.time_start_doubleSpinBox.value()
+        time_stop = self._mw.time_stop_doubleSpinBox.value()
+        npts = self._mw.npts_doubleSpinBox.value()
+        rabi_period = self._mw.rabi_period_doubleSpinBox.value()
+        self.SigSetPulseChanged.emit(time_start,time_stop,npts,rabi_period)
     def show(self):
         """
         H.Babashah - Taken from Qudi - Make window visible and put it above all other windows.
@@ -358,4 +397,17 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.activateWindow()
         self._mw.raise_()
 
+    def change_navg(self):
 
+
+        navg = self._mw.navg_doubleSpinBox.value()
+        self.SigNavgChanged.emit(navg)
+
+    def change_pulse_analysis_param(self):
+
+
+        threshold = self._mw.threshold_doubleSpinBox.value()
+        time_reference = self._mw.time_reference_doubleSpinBox.value()
+        time_reference_start = self._mw.time_reference_start_doubleSpinBox.value()
+        time_signal = self._mw.time_signal_doubleSpinBox.value()
+        time_signal_start = self._mw.time_signal_start_doubleSpinBox.value()

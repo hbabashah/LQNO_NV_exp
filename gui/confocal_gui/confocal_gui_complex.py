@@ -410,3 +410,5 @@ class ConfocalComplexGUI(GUIBase):
         time_reference_start = self._mw.time_reference_start_doubleSpinBox.value()
         time_signal = self._mw.time_signal_doubleSpinBox.value()
         time_signal_start = self._mw.time_signal_start_doubleSpinBox.value()
+        self.SigPulseAnalysisChanged.emit(threshold,time_reference,time_signal,time_reference_start,time_signal_start)
+

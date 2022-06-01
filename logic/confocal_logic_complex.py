@@ -161,15 +161,17 @@ class Confocallogiccomplex(GenericLogic):
                     Image_xy[i, j] = np.mean(DATA[self.ChannelNumber])
                     self.SigConfocalDataUpdated.emit(Image_xy)  # np.random.rand(5, 5)
                     Image_xy_arb[i, j] = np.mean(DATA[self.ChannelNumber])
-                    if self.mes_type=='Contrast' or 'Contrast_fmax':
+                    if self.mes_type=='Contrast' or self.mes_type == 'Contrast_fmax':
                         self._mw_device.set_fcw(self.fcw)
                         self._mw_device.set_status('ON')
                         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
                         time.sleep(1e-3)  # make sure sgn is on
                         DATA = self._nicard.read_data()
                         Image_xy_arb[i, j] = 1- np.mean(DATA[self.ChannelNumber])/Image_xy[i, j]
-                    if self.mes_type == 'T1' or 'Rabi' or 'Ramsey' or 'Hahn_echo':
-                        if self.mes_type == 'Rabi' or 'Ramsey' or 'Hahn_echo':
+                    print(self.mes_type)
+                    if self.mes_type == 'T1' or self.mes_type == 'Rabi' or self.mes_type == 'Ramsey' or self.mes_type == 'Hahn_echo':
+                        print('start pulse measurement')
+                        if self.mes_type == 'Rabi' or self.mes_type == 'Ramsey' or self.mes_type == 'Hahn_echo':
                             self._mw_device.set_fcw(self.fcw)
                             self._mw_device.set_status('ON')
                             time.sleep(1e-3)
@@ -297,7 +299,7 @@ class Confocallogiccomplex(GenericLogic):
         self._mw_device.set_pcw(pcw)
         self.pcw = pcw
     def set_ODMR(self, stime,npts):
-        self._pulser.set_ODMR(stime,npts)
+       # self._pulser.set_ODMR(stime,npts)
       #  self._mw_device.set_ODMR(stime,npts)
         self.stime = stime
         self.npts = npts
@@ -320,6 +322,7 @@ class Confocallogiccomplex(GenericLogic):
     def set_mes_type(self, mes_type):
 
         self.mes_type=mes_type
+        print(mes_type)
     def ThresholdL(self,data,t_v):
 
         t_ind = 0
@@ -341,3 +344,18 @@ class Confocallogiccomplex(GenericLogic):
         if t_ind==-1:
             print('Probably could not find the begining of the pulse, zero set as begining')
         return t_ind
+    def set_navg(self, navg):
+
+        self.navg = navg
+    def set_pulse(self, time_start,time_stop,npts,rabi_period):
+        self.time_start = time_start
+        self.time_stop = time_stop
+        self.npts = npts
+        self.rabi_period=rabi_period
+    def set_pulse_analysi_param(self, threshold,time_reference,time_signal,time_reference_start,time_signal_start):
+
+        self.threshold = threshold
+        self.time_reference = time_reference
+        self.time_signal = time_signal
+        self.time_reference_start = time_reference_start
+        self.time_signal_start = time_signal_start

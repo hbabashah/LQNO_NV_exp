@@ -58,7 +58,7 @@ class Streamer(Base, dummy_interface):
         return np.linspace(1,100,300), np.random.rand(300)
 
     def set_ODMR(self,SweepStep,Npts):
-        LaserCh = self._LaserCh
+        LaserCh = self._Laser_channel
         OscopeCh = self._scope_channel
         MWChTrig = self._MW_trigger_channel
         SwitchCh = self._switch_channel
@@ -77,6 +77,7 @@ class Streamer(Base, dummy_interface):
         self.seq = Sequence()
 
         # set digital channels
+        print(LaserCh,OscopeCh,MWChTrig,SwitchCh)
         self.seq.setDigital(LaserCh, LaserChseq)
         self.seq.setDigital(OscopeCh, OscopeTirgChseq)
         self.seq.setDigital(MWChTrig, MWChTrigseq)
@@ -103,7 +104,7 @@ class Streamer(Base, dummy_interface):
 
     def set_confocal(self,Xvalue,Yvalue):
         V2C_coef = 0.1 * 1e6  # It should be calibrated based on the acquired image
-        LaserCh = self._LaserCh
+        LaserCh = self._Laser_channel
         AnalogXCh = self.analogx_channel
         AnalogYCh = self.analogy_channel
         OscopeCh = self._scope_channel
@@ -143,9 +144,9 @@ class Streamer(Base, dummy_interface):
     def set_pulse_measurement(self, Variable,pulsetype,rabi_period):
         wl = 100e-6  # LaserPulseWidth in second
 
-        LaserCh = self._LaserCh
+        LaserCh = self._Laser_channel
         OscopeCh = self._scope_channel
-        MWCh = self.switch_channel # switch channel for MW
+        MWCh = self._switch_channel # switch channel for MW
         # define digital levels
         HIGH = 1
         LOW = 0

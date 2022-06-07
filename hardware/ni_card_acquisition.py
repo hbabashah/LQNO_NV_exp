@@ -24,7 +24,7 @@ class NICard_Acquisition(Base, dummy_interface):
     _device_name_fast = ConfigOption(name='device_name_fast', default='Dev3', missing='warn')
     _analog_inputs = ConfigOption(name='analog_inputs', default=list(), missing='warn')
     _analog_outputs = ConfigOption(name='analog_outputs', default=list(), missing='warn')
-    _trigger_terminal = ConfigOption(name='trigger_terminal', default='PFI0', missing='info')
+    _trigger_terminal = ConfigOption(name='trigger_terminal', default='PFI8', missing='info')
     _sampling_frequency = ConfigOption(name='sampling_frequency', default=200*10**3, missing='info')
 
 
@@ -43,6 +43,7 @@ class NICard_Acquisition(Base, dummy_interface):
 
         # Create the list of channels to acquire
         self.nb_chan = 0
+        print(self._device_name_fast)
         for channel in self._analog_inputs:
             daq.CreateAIVoltageChan(self._ai_task, self._device_name_fast+'/'+channel, None, daq.DAQmx_Val_RSE, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
             self.nb_chan += 1
@@ -116,7 +117,7 @@ class NICard_Acquisition(Base, dummy_interface):
     def read_data(self):
         time_data = np.linspace(0, self._acquisition_time, int(self.nb_samps_per_chan))
         t0 = time.time()
-        daq.ReadAnalogF64(self._ai_task, self.nb_samps_per_chan, 50, daq.DAQmx_Val_GroupByChannel, self.raw_data, self._buffer_size, ctypes.byref(self.read), None)
+        daq.ReadAnalogF64(self._ai_task, self.nb_samps_per_chan, 150, daq.DAQmx_Val_GroupByChannel, self.raw_data, self._buffer_size, ctypes.byref(self.read), None)
         t1 = time.time()
         print(t1-t0)
         self.data[0] = time_data

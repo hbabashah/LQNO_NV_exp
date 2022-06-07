@@ -100,7 +100,7 @@ class ConfocalComplexGUI(GUIBase):
         self.xy_cb = ColorBar(self.my_colors.cmap_normed, width=100, cb_min=0, cb_max=100)
         self._mw.xy_cb_ViewWidget.addItem(self.xy_cb)
         self._mw.xy_cb_ViewWidget.hideAxis('bottom')
-        self._mw.xy_cb_ViewWidget.setLabel('left', 'Fluorescence', units='V')
+        self._mw.xy_cb_ViewWidget.setLabel('left', 'Fluorescence', units='mV')
         self._mw.xy_cb_ViewWidget.setMouseEnabled(x=False, y=False)
         self._mw.xy_ViewWidget.addItem(self.xy_image)
 
@@ -109,7 +109,7 @@ class ConfocalComplexGUI(GUIBase):
         self.xy_cb_arb = ColorBar(self.my_colors.cmap_normed, width=100, cb_min=0, cb_max=100)
         self._mw.xy_cb_ViewWidget_arb.addItem(self.xy_cb_arb)
         self._mw.xy_cb_ViewWidget_arb.hideAxis('bottom')
-        self._mw.xy_cb_ViewWidget_arb.setLabel('left', 'Fluorescence', units='V')
+        self._mw.xy_cb_ViewWidget_arb.setLabel('left', 'a.u.', units='x1e3')
         self._mw.xy_cb_ViewWidget_arb.setMouseEnabled(x=False, y=False)
         self._mw.xy_ViewWidget_arb.addItem(self.xy_image_arb)
 
@@ -318,10 +318,12 @@ class ConfocalComplexGUI(GUIBase):
         minval = np.min(xy_image_data[np.nonzero(xy_image_data)])
         maxval = np.max(xy_image_data[np.nonzero(xy_image_data)])
         self.xy_image.setImage(image=xy_image_data,levels=(minval, maxval))
-        self.xy_cb.refresh_colorbar(minval, maxval)
+        print(minval)
+        print(maxval)
+        self.xy_cb.refresh_colorbar(minval*1e3, maxval*1e3)
         xMin=self._confocallogic.xmin
         xMax=self._confocallogic.xmax
-        yMin=self._confocallogic.xmin
+        yMin=self._confocallogic.ymin
         yMax=self._confocallogic.ymax
         self.image_x_padding=0.1e-6
         self.image_y_padding = 0.1e-6
@@ -349,10 +351,10 @@ class ConfocalComplexGUI(GUIBase):
         minval = np.min(xy_image_arb_data[np.nonzero(xy_image_arb_data)])
         maxval = np.max(xy_image_arb_data[np.nonzero(xy_image_arb_data)])
         self.xy_image_arb.setImage(image=xy_image_arb_data,levels=(minval, maxval))
-        self.xy_cb_arb.refresh_colorbar(minval, maxval)
+        self.xy_cb_arb.refresh_colorbar(minval*1e3, maxval*1e3)
         xMin=self._confocallogic.xmin
         xMax=self._confocallogic.xmax
-        yMin=self._confocallogic.xmin
+        yMin=self._confocallogic.ymin
         yMax=self._confocallogic.ymax
         self.image_x_padding=0.1e-6
         self.image_y_padding = 0.1e-6

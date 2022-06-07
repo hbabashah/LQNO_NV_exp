@@ -11,6 +11,8 @@ from core.connector import Connector
 from core.configoption import ConfigOption
 from core.statusvariable import StatusVar
 from threading import *
+from scipy.optimize import curve_fit
+
 
 class Confocallogiccomplex(GenericLogic):
 
@@ -103,14 +105,13 @@ class Confocallogiccomplex(GenericLogic):
             # self.module_state.lock()
             V_XvalueRange = np.linspace(self.xmin, self.xmax, int(self.xnpts))
             V_YvalueRange = np.linspace(self.ymin, self.ymax, int(self.ynpts))
-            print(V_XvalueRange)
-            print(self.xmax)
-            print(self.ymax)
+
+            def exponenial_func(x, a, b, c):
+                return a * (np.exp(-b * x))
             # self._scope.set_Center_Tscale(1, self.int_time / 1.25)  # 1.25*10
             # self._scope.set_trigger_sweep(0)  # set normal mode for ACQ of Oscope
             # self._scope.set_trigger_level(1)
             self.ChannelNumber = 1  # ACQ Chan Number
-            self._nicard.set_timing(self.int_time)
 
             # ChannelTrigNumber = 2  # ACQ_chan trigger
             # self._scope.set_trigger_source(ChannelTrigNumber)
@@ -128,6 +129,18 @@ class Confocallogiccomplex(GenericLogic):
             #Fixme change to direction_flag True toward right False towards left
             flag = True
             self._nicard.set_timing(self.int_time)
+            self._mw_device.set_fcw(self.fcw)
+            self.Laser_length = 100e-6
+            self.Laser_length_s = int(np.ceil(self.Laser_length * self._nicard.get_timing()))
+
+            var_sweep_type = 'linear'
+            if self.time_start==0:
+                self.time_start=10e-9
+            if var_sweep_type == 'log':
+                var_range = np.logspace(np.log10(self.time_start), np.log10(self.time_stop), self.npts,
+                                        base=10)
+            else:
+                var_range = np.linspace(self.time_start, self.time_stop, int(self.npts))
 
             i = -1;
             for V_Xvalue in V_XvalueRange:
@@ -143,55 +156,57 @@ class Confocallogiccomplex(GenericLogic):
                     self._piezo.gox(V_Xvalue)
                     self._piezo.goz(V_Yvalue)
                     if self.mes_type=='Contrast':
+                        time.sleep(1e-3)
                         self._mw_device.set_status('OFF')
                     if self.mes_type == 'Contrast_fmax':
+                        time.sleep(1e-3)
                         self._mw_device.set_fcw(self.fmax)
                         self._mw_device.set_status('ON')
-                    posread =self._piezo.get_position()
-                    print(V_Yvalue, posread[2])
-                    t1 = time.time()
-                    time.sleep(1e-3)  # make sure piezo is in the position and sgn is off
+                    #posread =self._piezo.get_position()
+                    #print(V_Yvalue, posread[2])
+                    #t1 = time.time()
+                    #time.sleep(1e-3)  # make sure piezo is in the position and sgn is off
 
                     # self._pulser.start_stream()
-                    posread = self._piezo.get_position()
-                    print(V_Yvalue, posread[2])
-                    t2 = time.time()
+                    #posread = self._piezo.get_position()
+                    #print(V_Yvalue, posread[2])
+                    #t2 = time.time() # 30 ms is enough for piezo to be sure that it is in the position
                     DATA = self._nicard.read_data()
-                    t3 = time.time()
+                    #t3 = time.time()
                     Image_xy[i, j] = np.mean(DATA[self.ChannelNumber])
                     self.SigConfocalDataUpdated.emit(Image_xy)  # np.random.rand(5, 5)
                     Image_xy_arb[i, j] = np.mean(DATA[self.ChannelNumber])
-                    if self.mes_type=='Contrast' or 'Contrast_fmax':
-                        self._mw_device.set_fcw(self.fcw)
+                    if self.mes_type=='Contrast' or self.mes_type == 'Contrast_fmax':
+                        self._mw_device.set_fcw(self.fcw) #for contrast fmax
                         self._mw_device.set_status('ON')
                         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
                         time.sleep(1e-3)  # make sure sgn is on
-                        DATA = self._nicard.read_data()
-                        Image_xy_arb[i, j] = 1- np.mean(DATA[self.ChannelNumber])/Image_xy[i, j]
-                    if self.mes_type == 'T1' or 'Rabi' or 'Ramsey' or 'Hahn_echo':
-                        if self.mes_type == 'Rabi' or 'Ramsey' or 'Hahn_echo':
-                            self._mw_device.set_fcw(self.fcw)
+                        DATA2 = self._nicard.read_data()
+                        Image_xy_arb[i, j] = 1- np.mean(DATA2[self.ChannelNumber])/Image_xy[i, j]
+
+                    print(self.mes_type)
+                    if self.mes_type == 'T1' or self.mes_type == 'Rabi' or self.mes_type == 'Ramsey' or self.mes_type == 'Hahn_echo':
+                        print('start pulse measurement')
+                        if self.mes_type == 'Rabi' or self.mes_type == 'Ramsey' or self.mes_type == 'Hahn_echo':
                             self._mw_device.set_status('ON')
                             time.sleep(1e-3)
-                        self.Laser_length=100e-6
-                        self.Laser_length_s=int(np.ceil(self.Laser_length*self._nicard.get_timing()))
-                        var_sweep_type = 'linear'
-                        if var_sweep_type == 'log':
-                            var_range = np.logspace(np.log10(self.time_start), np.log10(self.time_stop), self.npts,
-                                                    base=10)
-                        else:
-                            var_range = np.linspace(self.time_start, self.time_stop, int(self.npts))
                         VARResult = []
                         ii = 0
                         for variable in var_range:
                             if self.stop_acq == True:
                                 break
-                            self._pulser.set_pulse_measurement(variable, self.mes_type, self.rabi_period)
-                            self._pulser.start_stream()
-
-                            self._nicard.set_pause_trigger('Low')
                             self._nicard.set_refrence_trigger('Falling',self.Laser_length_s)
+                            self._nicard.set_pause_trigger('Low')
+
+                            #self._pulser.set_pulse_measurement(self.Laser_length,10e-6, 'T1', 2e-6)
+                            print(self.mes_type)
+                            self._pulser.set_pulse_measurement(self.Laser_length,variable, self.mes_type, self.rabi_period)
+                            self._pulser.start_stream()
+                            #print(self.Laser_length_s)
+                            print('HERE')
                             DATA = self._nicard.read_data()
+                            print(DATA)
+
                             DATAavg=np.zeros(self.Laser_length_s)
                             PulseAmp, PulseTime =np.array(DATA[self.ChannelNumber]), DATA[0]
                             for jj in range(int(np.floor(np.size(PulseAmp) / self.Laser_length_s))):
@@ -214,14 +229,26 @@ class Confocallogiccomplex(GenericLogic):
                             ind_R_pulseAmp = self.Laser_length_s-1
                             Ssample = PulseAmp[ind_L_pulseAmp:ind_L_pulseAmp + IntTimeSampleSignal]
                             Rsamples = PulseAmp[ind_R_pulseAmp - IntTimeSampleReference:ind_R_pulseAmp]
+                            print(ind_R_pulseAmp - IntTimeSampleReference-ind_R_pulseAmp)
                             Signal = np.trapz(Ssample, dx=5) / (np.size(Ssample) - 1)  # Signal Window
                             Reference = np.trapz(Rsamples, dx=5) / (np.size(Rsamples) - 1)  # Reference Window
 
                             VARResult.append(Signal / Reference)
                             ii = ii + 1
                             self.SigDataUpdated.emit(var_range[0:ii], np.array(VARResult))
+                            #print(DATAavg)
+                            #self.SigDataUpdated.emit(np.array(range(0,len(DATAavg),1)), np.array(DATAavg))
 
-                        Image_xy_arb[i, j] =np.array(VARResult)
+
+                        if self.mes_type=='T1':
+                            popt, pcov = curve_fit(exponenial_func, var_range, VARResult, p0=(.01, 1e-3, 1), maxfev=10000)
+
+                        #fittedx = np.linspace(var_range[0], var_range[np.size(var_range) - 1], 1000)
+                        #fittedy = exponenial_func(fittedx, *popt)
+
+                            Image_xy_arb[i, j] =np.array(round(1 / popt[1] * 1e3, 2))
+                        else:
+                            Image_xy_arb[i, j] = np.array(np.mean(VARResult))
                     if self.mes_type == 'PL':
                         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
                         time.sleep(1e-3)  # make sure sgn is on
@@ -234,7 +261,7 @@ class Confocallogiccomplex(GenericLogic):
                     t4 = time.time()
                     posread = self._piezo.get_position()
                     print(V_Yvalue, posread[2])
-                    print(t1-t0, t2-t1, t3-t2, t4-t3)
+                    #print(t1-t0, t2-t1, t3-t2, t4-t3)
 
                 V_YvalueRange = np.flip(V_YvalueRange)
                 flag = not_(flag)
@@ -297,7 +324,7 @@ class Confocallogiccomplex(GenericLogic):
         self._mw_device.set_pcw(pcw)
         self.pcw = pcw
     def set_ODMR(self, stime,npts):
-        self._pulser.set_ODMR(stime,npts)
+       # self._pulser.set_ODMR(stime,npts)
       #  self._mw_device.set_ODMR(stime,npts)
         self.stime = stime
         self.npts = npts
@@ -320,6 +347,7 @@ class Confocallogiccomplex(GenericLogic):
     def set_mes_type(self, mes_type):
 
         self.mes_type=mes_type
+        print(mes_type)
     def ThresholdL(self,data,t_v):
 
         t_ind = 0
@@ -341,3 +369,18 @@ class Confocallogiccomplex(GenericLogic):
         if t_ind==-1:
             print('Probably could not find the begining of the pulse, zero set as begining')
         return t_ind
+    def set_navg(self, navg):
+
+        self.navg = navg
+    def set_pulse(self, time_start,time_stop,npts,rabi_period):
+        self.time_start = time_start
+        self.time_stop = time_stop
+        self.npts = npts
+        self.rabi_period=rabi_period
+    def set_pulse_analysi_param(self, threshold,time_reference,time_signal,time_reference_start,time_signal_start):
+
+        self.threshold = threshold
+        self.time_reference = time_reference
+        self.time_signal = time_signal
+        self.time_reference_start = time_reference_start
+        self.time_signal_start = time_signal_start

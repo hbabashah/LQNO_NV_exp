@@ -40,6 +40,7 @@ class NICard_Acquisition(Base, dummy_interface):
         self.samplesWritten = daq.int32()
 
         daq.DAQmxCreateTask("", daq.byref(self._ai_task))
+        daq.DAQmxCreateTask("", daq.byref(self._ao_task))
 
         # Create the list of channels to acquire
         self.nb_chan = 0
@@ -48,10 +49,11 @@ class NICard_Acquisition(Base, dummy_interface):
             daq.CreateAIVoltageChan(self._ai_task, self._device_name_fast+'/'+channel, None, daq.DAQmx_Val_RSE, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
             self.nb_chan += 1
 
-        # self.nb_chan = 0
-        # for channel in self._analog_outputs:
-        #     daq.CreateAOVoltageChan(self._ao_task, self._device_name_slow+'/'+channel, None, daq.DAQmx_Val_Diff, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
-        #     self.nb_chan += 1
+        self.nb_chan_ao = 0
+        for channel in self._analog_outputs:
+            daq.CreateAOVoltageChan(self._ao_task, self._device_name_slow+'/'+channel, None,-10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
+            self.nb_chan_ao += 1
+
 
 
     def on_deactivate(self):
@@ -125,12 +127,15 @@ class NICard_Acquisition(Base, dummy_interface):
             self.data[i+1] = np.split(self.raw_data, self.nb_chan)[i]
         return self.data
 
-    # def write_ao(self,ao_value):
-    #     self._ao_value=ao_value
-    #     time_data = np.linspace(0, self._acquisition_time, int(self.nb_samps_per_chan))
-    #     daq.ReadAnalogF64(self._ai_task, self.nb_samps_per_chan, 50, daq.DAQmx_Val_GroupByChannel, self.raw_data, self._buffer_size, ctypes.byref(self.read), None)
-    #     daq.WriteAnalogF64(self._ao_task,numSampsPerChan=self.numSamples, autoStart=True, timeout=1.0, dataLayout=daq.DAQmx_Val_GroupByChannel, writeArray=self._ao_value, reserved=None,
-    #                                  sampsPerChanWritten=ctypes.byref(self.samplesWritten))
+    def write_ao(self,ao_value):
+
+        self._ao_value=ao_value
+        self._ao_value = np.vstack((self._ao_value, self._ao_value))
+        self._ao_value = self._ao_value.transpose()
+        self._ao_value = np.require(self._ao_value, np.double, ['C', 'W'])
+
+        daq.WriteAnalogF64(self._ao_task,numSampsPerChan=self.numSamples, autoStart=True, timeout=1.0, dataLayout=daq.DAQmx_Val_GroupByChannel, writeArray=self._ao_value, reserved=None,
+                                  sampsPerChanWritten=ctypes.byref(self.samplesWritten))
 
 
 

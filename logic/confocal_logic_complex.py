@@ -38,7 +38,7 @@ class Confocallogiccomplex(GenericLogic):
     xpos = StatusVar('xpos', 0)# x position
     ypos = StatusVar('ypos', 0)# y position
     zpos = StatusVar('zpos', 0)# z position
-    mes_type = StatusVar('mes_type', 'PL')# stop time
+    mes_type='PL'
     int_time = StatusVar('int_time', 20e-9)# integration time
 
 
@@ -68,6 +68,8 @@ class Confocallogiccomplex(GenericLogic):
         self.threadlock = Mutex()
 
     def on_activate(self):
+        print('on activate')
+        print(self.mes_type)
         self.Usepiezo = 0 # use piezo 1 or ni card 0
         # Get connectors
         self._mw_device = self.mw_source()
@@ -111,7 +113,7 @@ class Confocallogiccomplex(GenericLogic):
             # self._scope.set_Center_Tscale(1, self.int_time / 1.25)  # 1.25*10
             # self._scope.set_trigger_sweep(0)  # set normal mode for ACQ of Oscope
             # self._scope.set_trigger_level(1)
-            self.ChannelNumber = 1  # ACQ Chan Number
+            self.ChannelNumber = 2  # ACQ Chan Number
 
             # ChannelTrigNumber = 2  # ACQ_chan trigger
             # self._scope.set_trigger_source(ChannelTrigNumber)
@@ -129,6 +131,7 @@ class Confocallogiccomplex(GenericLogic):
             #Fixme change to direction_flag True toward right False towards left
             flag = True
             self._nicard.set_timing(self.int_time)
+            self._nicard.start_counting()
             self._mw_device.set_fcw(self.fcw)
             self.Laser_length = 100e-6
             self.Laser_length_s = int(np.ceil(self.Laser_length * self._nicard.get_timing()))
@@ -273,6 +276,7 @@ class Confocallogiccomplex(GenericLogic):
                 flag = not_(flag)
             self._mw_device.set_status('OFF')
             self.SigToggleAction.emit()
+            self._nicard.stop_counting()
             # if self.module_state() == 'locked':
             #     self.module_state.unlock()
             #     return -1
@@ -298,7 +302,6 @@ class Confocallogiccomplex(GenericLogic):
             self._piezo.goz(self.ypos)
             self._piezo.goy(self.zpos)
         else:
-            self._nicard.set_timing(self.int_time)
             V_Xvalue = self.xpos / 10
             V_Yvalue = self.ypos / 10
             self._nicard.write_ao(np.array([V_Xvalue, V_Yvalue]))
@@ -312,7 +315,7 @@ class Confocallogiccomplex(GenericLogic):
         # self._scope.set_scope_range(1, 3)
         # self._scope.set_Voffset(1, 1.5, 1)
         # self.ChannelNumber=1
-        self.ChannelNumber = 1
+        self.ChannelNumber = 2
         self._nicard.set_timing(self.int_time)
         DATA = self._nicard.read_data()
         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))

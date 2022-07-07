@@ -55,8 +55,8 @@ class NIFastCounter(Base, SlowCounterInterface, FastCounterInterface):
     def __init__(self, config, **kwargs):
         print('__init__')
         # Modify ONLY for PulsedMeasurements
-        self.useNIcard = 1 # analog input, APD
-        self.useNIcardDI = 0 # photon counter, SPC
+        self.useNIcard = 0 # analog input, APD
+        self.useNIcardDI = 1 # photon counter, SPC
         super().__init__(config=config, **kwargs)
 
         # Just some default values:

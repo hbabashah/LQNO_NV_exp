@@ -68,7 +68,7 @@ class Confocallogiccomplex(GenericLogic):
         self.threadlock = Mutex()
 
     def on_activate(self):
-
+        self.Usepiezo = 0 # use piezo 1 or ni card 0
         # Get connectors
         self._mw_device = self.mw_source()
         self._nicard = self.nicard()
@@ -103,8 +103,8 @@ class Confocallogiccomplex(GenericLogic):
             #     self.log.error('Can not start Confocal scan. Logic is already locked.')
             #     return -1
             # self.module_state.lock()
-            V_XvalueRange = np.linspace(self.xmin, self.xmax, int(self.xnpts))
-            V_YvalueRange = np.linspace(self.ymin, self.ymax, int(self.ynpts))
+            XvalueRange = np.linspace(self.xmin, self.xmax, int(self.xnpts))
+            YvalueRange = np.linspace(self.ymin, self.ymax, int(self.ynpts))
 
             def exponenial_func(x, a, b, c):
                 return a * (np.exp(-b * x))
@@ -122,8 +122,8 @@ class Confocallogiccomplex(GenericLogic):
             # self._scope.set_scope_range(1, 3)
             # self._scope.set_Voffset(1, 1.5, 1)
 
-            Image_xy = np.zeros((int(np.size(V_XvalueRange)), int(np.size(V_YvalueRange))))
-            Image_xy_arb = np.zeros((int(np.size(V_XvalueRange)), int(np.size(V_YvalueRange))))
+            Image_xy = np.zeros((int(np.size(XvalueRange)), int(np.size(YvalueRange))))
+            Image_xy_arb = np.zeros((int(np.size(XvalueRange)), int(np.size(YvalueRange))))
 
             # AutoVscale=True
             #Fixme change to direction_flag True toward right False towards left
@@ -143,18 +143,23 @@ class Confocallogiccomplex(GenericLogic):
                 var_range = np.linspace(self.time_start, self.time_stop, int(self.npts))
 
             i = -1;
-            for V_Xvalue in V_XvalueRange:
+            for Xvalue in XvalueRange:
                 i = i + 1
                 j = 0
                 if self.stop_acq == True:
                     break
-                for V_Yvalue in V_YvalueRange:
+                for Yvalue in YvalueRange:
                     if flag == False:
                         j = j - 1
-                    # self._pulser.set_confocal(V_Xvalue, V_Yvalue)
+                    # self._pulser.set_confocal(Xvalue, Yvalue)
                     t0 = time.time()
-                    self._piezo.gox(V_Xvalue)
-                    self._piezo.goz(V_Yvalue)
+                    if self.Usepiezo==True:
+                        self._piezo.gox(Xvalue)
+                        self._piezo.goz(Yvalue)
+                    else:
+                        V_Xvalue=Xvalue/10
+                        V_Yvalue=Yvalue/10
+                        self._nicard.write_ao(np.array([V_Xvalue,V_Yvalue]))
                     if self.mes_type=='Contrast':
                         time.sleep(1e-3)
                         self._mw_device.set_status('OFF')
@@ -163,13 +168,13 @@ class Confocallogiccomplex(GenericLogic):
                         self._mw_device.set_fcw(self.fmax)
                         self._mw_device.set_status('ON')
                     #posread =self._piezo.get_position()
-                    #print(V_Yvalue, posread[2])
+                    #print(Yvalue, posread[2])
                     #t1 = time.time()
                     #time.sleep(1e-3)  # make sure piezo is in the position and sgn is off
 
                     # self._pulser.start_stream()
                     #posread = self._piezo.get_position()
-                    #print(V_Yvalue, posread[2])
+                    #print(Yvalue, posread[2])
                     #t2 = time.time() # 30 ms is enough for piezo to be sure that it is in the position
                     DATA = self._nicard.read_data()
                     #t3 = time.time()
@@ -259,11 +264,12 @@ class Confocallogiccomplex(GenericLogic):
                         break
 
                     t4 = time.time()
-                    posread = self._piezo.get_position()
-                    print(V_Yvalue, posread[2])
+                    if self.Usepiezo==1:
+                        posread = self._piezo.get_position()
+                        print(Yvalue, posread[2])
                     #print(t1-t0, t2-t1, t3-t2, t4-t3)
 
-                V_YvalueRange = np.flip(V_YvalueRange)
+                YvalueRange = np.flip(YvalueRange)
                 flag = not_(flag)
             self._mw_device.set_status('OFF')
             self.SigToggleAction.emit()
@@ -287,12 +293,17 @@ class Confocallogiccomplex(GenericLogic):
         self.zpos = zpos*1e6
 
     def move_to_position(self):
-        print(self.xpos,self.ypos,self.zpos)
-        self._piezo.gox(self.xpos)
-        self._piezo.goz(self.ypos)
-        self._piezo.goy(self.zpos)
+        if self.Usepiezo==1:
+            self._piezo.gox(self.xpos) # in um
+            self._piezo.goz(self.ypos)
+            self._piezo.goy(self.zpos)
+        else:
+            self._nicard.set_timing(self.int_time)
+            V_Xvalue = self.xpos / 10
+            V_Yvalue = self.ypos / 10
+            self._nicard.write_ao(np.array([V_Xvalue, V_Yvalue]))
 
-        print(self._piezo.get_position())
+        #print(self._piezo.get_position())
         # self._pulser.set_confocal(self.xpos, self.ypos)
         # self._scope.set_Center_Tscale(1, self.int_time / 1.25)  # 1.25*10
         # self._scope.set_trigger_sweep(0)  # set normal mode for ACQ of Oscope

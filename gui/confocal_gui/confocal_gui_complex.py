@@ -156,6 +156,7 @@ class ConfocalComplexGUI(GUIBase):
 
         # Connections to logic
         self._mw.mes_type_window_comboBox.currentTextChanged.connect(self._confocallogic.set_mes_type)
+        self._mw.channel_window_comboBox.currentTextChanged.connect(self._confocallogic.set_channel)
         self._mw.int_time_doubleSpinBox.setValue(self._confocallogic.int_time) # Status var
         self._mw.movetoxy_btn.clicked.connect(self._confocallogic.move_to_position)
         self.SigStartAcquisition.connect(self._confocallogic.start_data_acquisition)

@@ -39,6 +39,7 @@ class Confocallogiccomplex(GenericLogic):
     ypos = StatusVar('ypos', 0)# y position
     zpos = StatusVar('zpos', 0)# z position
     mes_type='PL'
+    channel='ai1'
     int_time = StatusVar('int_time', 20e-9)# integration time
 
 
@@ -113,8 +114,12 @@ class Confocallogiccomplex(GenericLogic):
             # self._scope.set_Center_Tscale(1, self.int_time / 1.25)  # 1.25*10
             # self._scope.set_trigger_sweep(0)  # set normal mode for ACQ of Oscope
             # self._scope.set_trigger_level(1)
-            self.ChannelNumber = 2  # ACQ Chan Number
-
+            if self.channel=='ai1':
+                self.ChannelNumber = 1  # ACQ Chan Number
+            elif self.channel=='pfi1':
+                self.ChannelNumber = 2
+            else:
+                self.ChannelNumber = 1
             # ChannelTrigNumber = 2  # ACQ_chan trigger
             # self._scope.set_trigger_source(ChannelTrigNumber)
             # self._pulser.set_confocal(0, 0)  # intialize the confocal
@@ -203,7 +208,7 @@ class Confocallogiccomplex(GenericLogic):
                         for variable in var_range:
                             if self.stop_acq == True:
                                 break
-                            self._nicard.set_refrence_trigger('Falling',self.Laser_length_s)
+                            self._nicard.set_refrence_trigger('Falling',self.Laser_length_s) #start the measurement
                             self._nicard.set_pause_trigger('Low')
 
                             #self._pulser.set_pulse_measurement(self.Laser_length,10e-6, 'T1', 2e-6)
@@ -305,6 +310,12 @@ class Confocallogiccomplex(GenericLogic):
             V_Xvalue = self.xpos / 10
             V_Yvalue = self.ypos / 10
             self._nicard.write_ao(np.array([V_Xvalue, V_Yvalue]))
+        if self.channel == 'ai1':
+            self.ChannelNumber = 1  # ACQ Chan Number
+        elif self.channel == 'pfi1':
+            self.ChannelNumber = 2
+        else:
+            self.ChannelNumber = 1
 
         #print(self._piezo.get_position())
         # self._pulser.set_confocal(self.xpos, self.ypos)
@@ -314,10 +325,10 @@ class Confocallogiccomplex(GenericLogic):
         #
         # self._scope.set_scope_range(1, 3)
         # self._scope.set_Voffset(1, 1.5, 1)
-        # self.ChannelNumber=1
-        self.ChannelNumber = 2
         self._nicard.set_timing(self.int_time)
+        self._nicard.start_counting()
         DATA = self._nicard.read_data()
+        self._nicard.stop_counting()
         self.SigDataUpdated.emit(np.array(DATA[0]), np.array(DATA[self.ChannelNumber]))
 
     def set_fcw(self, fcw):
@@ -362,6 +373,11 @@ class Confocallogiccomplex(GenericLogic):
 
         self.mes_type=mes_type
         print(mes_type)
+
+    def set_channel(self, channel):
+
+        self.channel=channel
+        print(channel)
     def ThresholdL(self,data,t_v):
 
         t_ind = 0

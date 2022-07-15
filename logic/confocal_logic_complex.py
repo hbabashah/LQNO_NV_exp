@@ -210,7 +210,8 @@ class Confocallogiccomplex(GenericLogic):
                                 break
                             self._nicard.set_refrence_trigger('Falling',self.Laser_length_s) #start the measurement
                             self._nicard.set_pause_trigger('Low')
-
+                            if self.ChannelNumber == 2:
+                                self._nicard.set_arm_start_trigger()
                             #self._pulser.set_pulse_measurement(self.Laser_length,10e-6, 'T1', 2e-6)
                             print(self.mes_type)
                             self._pulser.set_pulse_measurement(self.Laser_length,variable, self.mes_type, self.rabi_period)
@@ -259,7 +260,7 @@ class Confocallogiccomplex(GenericLogic):
                         #fittedx = np.linspace(var_range[0], var_range[np.size(var_range) - 1], 1000)
                         #fittedy = exponenial_func(fittedx, *popt)
 
-                            Image_xy_arb[i, j] =np.array(round(1 / popt[1] * 1e3, 2))
+                            Image_xy_arb[i, j] =np.array(np.mean(VARResult))#np.array(round(1 / popt[1] * 1e3, 2))
                         else:
                             Image_xy_arb[i, j] = np.array(np.mean(VARResult))
                     if self.mes_type == 'PL':

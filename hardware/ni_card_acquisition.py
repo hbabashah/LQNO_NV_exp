@@ -36,8 +36,8 @@ class NICard_Acquisition(Base, dummy_interface):
         # Create the acquisition task
         self._ai_task = daq.TaskHandle()
         self._ao_task = daq.TaskHandle()
-        self.counter_in_task=daq.TaskHandle()
-        self.counter_out_task=daq.TaskHandle()
+        self.counter_in_task = daq.TaskHandle()
+        self.counter_out_task = daq.TaskHandle()
         self.read = daq.int32()
         self.samplesWritten = daq.int32()
 
@@ -49,15 +49,17 @@ class NICard_Acquisition(Base, dummy_interface):
         self.nb_chan = 0
         print(self._device_name_fast)
         for channel in self._analog_inputs:
-            daq.CreateAIVoltageChan(self._ai_task, self._device_name_fast+'/'+channel, None, daq.DAQmx_Val_RSE, -10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
+            daq.CreateAIVoltageChan(self._ai_task, self._device_name_fast + '/' + channel, None, daq.DAQmx_Val_RSE, -10,
+                                    10, daq.DAQmx_Val_Volts, None)  # RSE or NRSE or Diff
             self.nb_chan += 1
 
         self.nb_chan_ao = 0
         for channel in self._analog_outputs:
-            daq.CreateAOVoltageChan(self._ao_task, self._device_name_slow+'/'+channel, None,-10, 10, daq.DAQmx_Val_Volts, None) # RSE or NRSE or Diff
+            daq.CreateAOVoltageChan(self._ao_task, self._device_name_slow + '/' + channel, None, -10, 10,
+                                    daq.DAQmx_Val_Volts, None)  # RSE or NRSE or Diff
             self.nb_chan_ao += 1
         if self.nb_chan_ao:
-            self.outputRate=1000
+            self.outputRate = 1000
             self.numSamples = 2
             # daq.CfgSampClkTiming(self._ao_task,'', self.outputRate, daq.DAQmx_Val_Rising,
             #                       daq.DAQmx_Val_FiniteSamps, self.numSamples)
@@ -68,23 +70,24 @@ class NICard_Acquisition(Base, dummy_interface):
         self.counter_channel = '/Dev3/PFI1'
         ##################################
         daq.CreateCISemiPeriodChan(self.counter_in_task,
-            self.ch2,
-            'Counter Channel 1',  # The name to assign to the created virtual channel.
-            0,  # Expected minimum count value
-            2,  # Expected maximum count value
-            daq.DAQmx_Val_Ticks,  # The units to use to return the measurement. Here are timebase ticks
-            '')
+                                   self.ch2,
+                                   'Counter Channel 1',  # The name to assign to the created virtual channel.
+                                   0,  # Expected minimum count value
+                                   2,  # Expected maximum count value
+                                   daq.DAQmx_Val_Ticks,
+                                   # The units to use to return the measurement. Here are timebase ticks
+                                   '')
 
         my_clock_channel = '/Dev3/Ctr2'
         duty_cycle = 0.5
-        daq.CreateCOPulseChanFreq(self.counter_out_task,my_clock_channel,
-                                    "myClockTask",
-                                    daq.DAQmx_Val_Hz,
-                                    daq.DAQmx_Val_Low,
-                                    0,
-                                    self._sampling_frequency_slow/2, # semiperiodic resolution
-                                    duty_cycle,
-                                    )
+        daq.CreateCOPulseChanFreq(self.counter_out_task, my_clock_channel,
+                                  "myClockTask",
+                                  daq.DAQmx_Val_Hz,
+                                  daq.DAQmx_Val_Low,
+                                  0,
+                                  self._sampling_frequency_slow / 2,  # semiperiodic resolution
+                                  duty_cycle,
+                                  )
 
         daq.CfgImplicitTiming(self.counter_out_task,
                               daq.DAQmx_Val_ContSamps,
@@ -94,6 +97,7 @@ class NICard_Acquisition(Base, dummy_interface):
         daq.SetCISemiPeriodTerm(self.counter_in_task,  # Sync
                                 self.ch2,  # assign a named Terminal
                                 my_clock_channel + 'InternalOutput')
+
     def on_deactivate(self):
         daq.DAQmxStopTask(self._ai_task)
         daq.DAQmxClearTask(self._ai_task)
@@ -101,35 +105,32 @@ class NICard_Acquisition(Base, dummy_interface):
         daq.DAQmxClearTask(self.counter_in_task)
         daq.DAQmxStopTask(self.counter_out_task)
         daq.DAQmxClearTask(self.counter_out_task)
+
     def set_timing(self, acquisition_time):
         """ H.Babashah - Define the timing of the acquisition. """
         self._acquisition_time = acquisition_time
-        self.nb_samps_per_chan = int(self._acquisition_time*self._sampling_frequency_slow)
-        self._buffer_size = int(self._acquisition_time*self._sampling_frequency_slow*self.nb_chan)
+        self.nb_samps_per_chan = int(self._acquisition_time * self._sampling_frequency_slow)
+        self._buffer_size = int(self._acquisition_time * self._sampling_frequency_slow * self.nb_chan)
         self.raw_data = np.zeros(int(self._buffer_size))
         daq.CfgSampClkTiming(self._ai_task, '', int(self._sampling_frequency_slow), daq.DAQmx_Val_Rising,
                              daq.DAQmx_Val_FiniteSamps, self.nb_samps_per_chan)
 
-        self.data = np.ndarray((self.nb_chan+2, self.nb_samps_per_chan)) # nb of rows: +1 for time, +1 for digital channel
+        self.data = np.ndarray(
+            (self.nb_chan + 2, self.nb_samps_per_chan))  # nb of rows: +1 for time, +1 for digital channel
 
         ###################################################
         ##          Counting
         ###################################################
 
-
-
-
         ##################################
-        daq.SetCICtrTimebaseSrc(self.counter_in_task,self.ch2, self.counter_channel)
+        daq.SetCICtrTimebaseSrc(self.counter_in_task, self.ch2, self.counter_channel)
 
-        daq.CfgImplicitTiming(self.counter_in_task,daq.DAQmx_Val_ContSamps,
-                                  2 ** 25
-                                  # 2**30 is maximum. buffer length which stores  temporarily the number of generated samples
-                                  )
+        daq.CfgImplicitTiming(self.counter_in_task, daq.DAQmx_Val_ContSamps,
+                              2 ** 25
+                              # 2**30 is maximum. buffer length which stores  temporarily the number of generated samples
+                              )
 
-        self.samples = int(np.ceil(acquisition_time *self._sampling_frequency_slow/2))
-
-
+        self.samples = int(np.ceil(acquisition_time * self._sampling_frequency_slow / 2))
 
     def start_counting(self):
         '''
@@ -146,8 +147,10 @@ class NICard_Acquisition(Base, dummy_interface):
         '''
         daq.DAQmxStopTask(self.counter_out_task)
         daq.DAQmxStopTask(self.counter_in_task)
+
     def get_timing(self):
         return self._sampling_frequency_slow
+
     def set_trigger(self, edge):
         """ H.Babashah - Define the edge of the external trigger. """
 
@@ -160,77 +163,98 @@ class NICard_Acquisition(Base, dummy_interface):
         """ H.Babashah - it stop acquiring the data while triggered. """
 
         daq.SetPauseTrigType(self._ai_task,
-            daq.DAQmx_Val_DigLvl)  # Pause the measurement or generation while a digital signal is at either a high or low state.
+                             daq.DAQmx_Val_DigLvl)  # Pause the measurement or generation while a digital signal is at either a high or low state.
         daq.SetDigLvlPauseTrigSrc(self._ai_task,
-            self._trigger_terminal)  # Specifies the name of a terminal where there is a digital signal to use as the source of the Pause Trigger.
+                                  self._trigger_terminal)  # Specifies the name of a terminal where there is a digital signal to use as the source of the Pause Trigger.
         if when == 'High':
             daq.SetDigLvlPauseTrigWhen(self._ai_task,
-                daq.DAQmx_Val_High)  # Specifies whether the task pauses while the signal is high or low
+                                       daq.DAQmx_Val_High)  # Specifies whether the task pauses while the signal is high or low
         elif when == 'Low':
             daq.SetDigLvlPauseTrigWhen(self._ai_task,
-                daq.DAQmx_Val_Low)  # Specifies whether the task pauses while the signal is high or low
-
-
-
-    def set_refrence_trigger(self, edge,pretriggerSamples):
+                                       daq.DAQmx_Val_Low)  # Specifies whether the task pauses while the signal is high or low
+        '''
+        daq.SetPauseTrigType(self.counter_out_task,
+                             daq.DAQmx_Val_DigLvl)  # Pause the measurement or generation while a digital signal is at either a high or low state.
+        daq.SetDigLvlPauseTrigSrc(self.counter_out_task,
+                                  self._trigger_terminal)  # Specifies the name of a terminal where there is a digital signal to use as the source of the Pause Trigger.
+        if when == 'High':
+            daq.SetDigLvlPauseTrigWhen(self.counter_out_task,
+                                       daq.DAQmx_Val_High)  # Specifies whether the task pauses while the signal is high or low
+        elif when == 'Low':
+            daq.SetDigLvlPauseTrigWhen(self.counter_out_task,
+                                       daq.DAQmx_Val_Low)  # Specifies whether the task pauses while the signal is high or low
+        '''
+    def set_refrence_trigger(self, edge, pretriggerSamples):
         """ H.Babashah - It acquire the data before the trigger """
         if edge == 'Rising':
-            daq.CfgDigEdgeRefTrig(self._ai_task,self._trigger_terminal, daq.DAQmx_Val_Rising, pretriggerSamples)  # C channel DDG
+            daq.CfgDigEdgeRefTrig(self._ai_task, self._trigger_terminal, daq.DAQmx_Val_Rising,
+                                  pretriggerSamples)  # C channel DDG
+
         elif edge == 'Falling':
-            daq.CfgDigEdgeRefTrig(self._ai_task,self._trigger_terminal, daq.DAQmx_Val_Falling, pretriggerSamples)  # C channel DDG
+            daq.CfgDigEdgeRefTrig(self._ai_task, self._trigger_terminal, daq.DAQmx_Val_Falling,
+                                  pretriggerSamples)  # C channel DDG
+
+    def set_arm_start_trigger(self):
+
+        daq.SetArmStartTrigType(self.counter_in_task, daq.DAQmx_Val_DigEdge)  #############################Changed
+        daq.SetDigEdgeArmStartTrigSrc(self.counter_in_task,
+                                      self._trigger_terminal)  #############################Changed
+        daq.SetDigEdgeArmStartTrigEdge(self.counter_in_task, daq.DAQmx_Val_Rising)  #############################Changed
 
     def start_acquisition(self):
         """ H.Babashah - Start the acquisition task.
         It seems that using the start task generates an error when trying to read data several times for "continuous acquisition".
         Only calling read several times seems fine. """
-        pass #daq.DAQmxStartTask(self._ai_task)
+        pass  # daq.DAQmxStartTask(self._ai_task)
 
     def stop_acquisition(self):
         daq.DAQmxStopTask(self._ai_task)
 
     def read_data(self):
+        ''''
+
+        '''
         time_data = np.linspace(0, self._acquisition_time, int(self.nb_samps_per_chan))
         t0 = time.time()
-        daq.ReadAnalogF64(self._ai_task, self.nb_samps_per_chan, 150, daq.DAQmx_Val_GroupByChannel, self.raw_data, self._buffer_size, ctypes.byref(self.read), None)
+        daq.ReadAnalogF64(self._ai_task, self.nb_samps_per_chan, 150, daq.DAQmx_Val_GroupByChannel, self.raw_data,
+                          self._buffer_size, ctypes.byref(self.read), None)
         t1 = time.time()
-        print(t1-t0)
+        print(t1 - t0)
         self.data[0] = time_data
         for i in range(self.nb_chan):
-            self.data[i+1] = np.split(self.raw_data, self.nb_chan)[i]
-
-
+            self.data[i + 1] = np.split(self.raw_data, self.nb_chan)[i]
 
         n_read_samples = daq.int32()
         _RWTimeout = 10
 
         count_data = np.empty((1, 2 * self.samples), dtype=np.uint32)
 
-        daq.ReadCounterU32(self.counter_in_task,2 * self.samples,
-                               _RWTimeout,
-                               count_data[0],
-                               2 * self.samples,
-                               ctypes.byref(n_read_samples),
-                               None)  #
-        self.data[-1, :] = count_data[0, :] * self._sampling_frequency_slow # by convention, data from digital channel is stored in last row
+        daq.ReadCounterU32(self.counter_in_task, 2 * self.samples,
+                           _RWTimeout,
+                           count_data[0],
+                           2 * self.samples,
+                           ctypes.byref(n_read_samples),
+                           None)  #
+        self.data[-1, :] = count_data[0,
+                           :] * self._sampling_frequency_slow  # by convention, data from digital channel is stored in last row
         print('count')
         print(sum(count_data[0, :]))
-        print(self.data[-1,:].max())
+        print(self.data[-1, :].max())
         print(self._acquisition_time)
         print(np.shape(count_data[0, :]))
         print(np.shape(self.data))
         return self.data
 
-    def write_ao(self,ao_value):
+    def write_ao(self, ao_value):
 
-        self._ao_value=ao_value
+        self._ao_value = ao_value
         self._ao_value = np.vstack((self._ao_value, self._ao_value))
         self._ao_value = self._ao_value.transpose()
         self._ao_value = np.require(self._ao_value, np.double, ['C', 'W'])
 
-        daq.WriteAnalogF64(self._ao_task,numSampsPerChan=self.numSamples, autoStart=True, timeout=1.0, dataLayout=daq.DAQmx_Val_GroupByChannel, writeArray=self._ao_value, reserved=None,
-                                  sampsPerChanWritten=ctypes.byref(self.samplesWritten))
-
-
+        daq.WriteAnalogF64(self._ao_task, numSampsPerChan=self.numSamples, autoStart=True, timeout=1.0,
+                           dataLayout=daq.DAQmx_Val_GroupByChannel, writeArray=self._ao_value, reserved=None,
+                           sampsPerChanWritten=ctypes.byref(self.samplesWritten))
 
         #
         # Counter1.SetArmStartTrigType(daq.DAQmx_Val_DigEdge)           #############################Changed

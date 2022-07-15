@@ -207,7 +207,7 @@ class ConfocalComplexGUI(GUIBase):
 
     def on_deactivate(self):
         """
-        H.Babashah & F. Baeto - Reverse steps of activation and also close the main window and do whatever when a module is closed using closed btn in task manager
+        H.Babashah - Reverse steps of activation and also close the main window and do whatever when a module is closed using closed btn in task manager
 
         @return int: error code (0:OK, -1:error)
         """
@@ -400,13 +400,17 @@ class ConfocalComplexGUI(GUIBase):
         self._mw.raise_()
 
     def change_navg(self):
-
+        """
+        H.Babashah - change the number of averages
+        """
 
         navg = self._mw.navg_doubleSpinBox.value()
         self.SigNavgChanged.emit(navg)
 
     def change_pulse_analysis_param(self):
-
+        """
+        H.Babashah - change  pulse analy sis param
+        """
 
         threshold = self._mw.threshold_doubleSpinBox.value()
         time_reference = self._mw.time_reference_doubleSpinBox.value()

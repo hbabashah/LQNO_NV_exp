@@ -409,7 +409,7 @@ class ConfocalComplexGUI(GUIBase):
 
     def change_pulse_analysis_param(self):
         """
-        H.Babashah - change  pulse analy sis param
+        H.Babashah - change  pulse analysis param
         """
 
         threshold = self._mw.threshold_doubleSpinBox.value()

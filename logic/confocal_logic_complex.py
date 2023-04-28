@@ -35,9 +35,9 @@ class Confocallogiccomplex(GenericLogic):
     ymin = StatusVar('ymin', 0)# sweep y min
     ymax = StatusVar('ymax', 1e-6)# sweep y max
     ynpts = StatusVar('ynpts', 10)# sweep y points
-    xpos = StatusVar('xpos', 0)# x position
-    ypos = StatusVar('ypos', 0)# y position
-    zpos = StatusVar('zpos', 0)# z position
+    xpos = StatusVar('xpos', 100)# x position
+    ypos = StatusVar('ypos', 100)# y position
+    zpos = StatusVar('zpos', 100)# z position
     mes_type='PL'
     channel='ai1'
     int_time = StatusVar('int_time', 20e-9)# integration time
@@ -71,7 +71,7 @@ class Confocallogiccomplex(GenericLogic):
     def on_activate(self):
         print('on activate')
         print(self.mes_type)
-        self.Usepiezo = 0 # use piezo 1 or ni card 0
+        self.Usepiezo = 1 # use piezo 1 or ni card 0
         # Get connectors
         self._mw_device = self.mw_source()
         self._nicard = self.nicard()

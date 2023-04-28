@@ -43,6 +43,7 @@ class Mpiezo(Base, dummy_interface):
 
         mcl_release_all = self.madlib['MCL_ReleaseAllHandles']
         mcl_release_all()
+
     def mcl_start(self):
         """
         Requests control of a single Mad City Labs Nano-Drive.
@@ -94,10 +95,13 @@ class Mpiezo(Base, dummy_interface):
 
     def gox(self, x_position):
         self.mcl_write(x_position, 1)
+
     def goy(self,y_position):
         self.mcl_write(y_position, 2)
+
     def goz(self, z_position):
         self.mcl_write(z_position, 3)
+
     def get_position(self):
         return self.mcl_read(1), self.mcl_read(2), self.mcl_read(3)
 
